@@ -1,21 +1,362 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Моя страница</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Виртуальный ИИ помощник</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            padding: 50px;
-            background-color: #f0f0f0;
-        }
-        h1 { color: #333; }
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f0f2f5; /* Фон страницы для контраста */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        margin: 0;
+      }
+
+      /* Основной контейнер чата (окно) */
+      #chat-container {
+        width: 400px;
+        height: 600px;
+        background-color: #fff;
+        border-radius: 10px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        position: relative;
+      }
+
+      /* Заголовок (черный блок) */
+      .chat-header {
+        background-color: #c00000;
+        color: white;
+        padding: 15px;
+        display: flex;
+        align-items: center;
+        border-radius: 10px 10px 0 0;
+        position: relative;
+      }
+
+      .chat-header img {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        margin-right: 10px;
+        border: 2px solid white;
+      }
+
+      .header-text h2 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: bold;
+      }
+
+      .header-text p {
+        margin: 2px 0 0;
+        font-size: 12px;
+        opacity: 0.8;
+      }
+
+      .close-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: none;
+        border: none;
+        color: white;
+        font-size: 20px;
+        cursor: pointer;
+      }
+
+      /* Тело чата */
+      #chat-body {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background-color: #f9f9f9;
+        overflow-y: auto;
+      }
+
+      /* Секция описания (статичный текст) */
+      .intro-section {
+        padding: 15px;
+        background-color: #fff;
+        border-bottom: 1px solid #eee;
+      }
+
+      .intro-section h4 {
+        margin: 0 0 5px;
+        font-size: 14px;
+        font-weight: bold;
+      }
+
+      .intro-section p {
+        margin: 0;
+        font-size: 13px;
+        color: #555;
+        line-height: 1.4;
+      }
+
+      /* Область сообщений */
+      #chat-messages {
+        flex: 1;
+        padding: 15px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .message {
+        max-width: 80%;
+        padding: 10px 15px;
+        border-radius: 15px;
+        margin-bottom: 10px;
+        font-size: 14px;
+        line-height: 1.4;
+        position: relative;
+        word-wrap: break-word;
+      }
+
+      /* Сообщение пользователя (синее, справа) */
+      .message.user {
+        background-color: #e3f2fd;
+        align-self: flex-end;
+        border-bottom-right-radius: 2px;
+      }
+
+      /* Сообщение бота (серое, слева) */
+      .message.bot {
+        background-color: #f1f1f1;
+        align-self: flex-start;
+        border-bottom-left-radius: 2px;
+      }
+
+      /* Ссылки в сообщениях */
+      .message a {
+        color: #1976d2;
+        text-decoration: underline;
+      }
+
+      /* Поле ввода */
+      #input-area {
+        padding: 10px;
+        background-color: #fff;
+        border-top: 1px solid #eee;
+        display: flex;
+        align-items: center;
+      }
+
+      #message-input {
+        flex: 1;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 20px;
+        outline: none;
+        font-size: 14px;
+      }
+
+      #send-btn {
+        background: none;
+        border: none;
+        margin-left: 10px;
+        cursor: pointer;
+        color: #555;
+        font-size: 20px;
+      }
+
+      #send-btn:hover {
+        color: #212121;
+      }
+
+      /* Состояния */
+      .loading {
+        color: #666;
+        font-style: italic;
+        font-size: 12px;
+      }
+      .error {
+        color: red;
+        font-size: 12px;
+        padding: 5px;
+        background: #ffe6e6;
+        border-radius: 5px;
+        align-self: center;
+      }
     </style>
-</head>
-<body>
-    <h1>Привет, я AlexAldoshin!</h1>
-    <p>Это моя личная страница на GitHub.</p>
-</body>
+  </head>
+  <body>
+    <div id="chat-container">
+      <!-- Заголовок -->
+      <div class="chat-header">
+        
+        <!-- <img src="bot.png" alt="Logo" /> -->
+        <img alt="LOGO" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAABQCAYAAACOEfKtAAABhWlDQ1BJQ0MgUHJvZmlsZQAAKM+VkTtIw1AUhv+mig8qinYQcchQnSyIijpKFItgobQVWnUwuekLmjQkKS6OgmvBwcdi1cHFWVcHV0EQfIA4OTopukiJ5yaFFqGCFw7347/3/zn3XECoFplmtY0Dmm6b8YgkptKrYscrutBP1YcZmVlGNLGYRMv1dQ8f3+/CPAv/Wz1qxmKATySeY4ZpE28QT2/aBud94iDLyyrxOfGYSQ0SP3Jd8fiNc85lgWcGzWR8njhILOaaWGliljc14inikKrplC+kPFY5b3HWimVW75O/MJDRVxJcpxpGBEuIIgYRCsoooAgbYdp1UizE6Vxq4R9y/TFyKeQqgJFjASVokF0/+B/8nq2VnZzwkgIS0P7iOB8jQMcuUKs4zvex49ROAP8zcKU3/KUqMPtJeqWhhY6A3m3g4rqhKXvA5Q4w+GTIpuxKfiohmwXez+ib0sDALdC95s2tfo7TByBJs1q+AQ4OgdEcZa+3eHdn89z+vOPOD9IPlWdyteMzc54AAAAJcEhZcwAACxMAAAsTAQCanBgAACeBSURBVHhexXwJeFTlvfd/ksw+k2Sy7wmQQIBAAGUT6wLWynXpFVur7fP1s/brYqve1sd+rbfffdrn6Xa7XFtba61brbfVaqsilqtYQUBBRRFB9iwQErLPZDKTzGS25Pv93pk3ngwJEOR+34/nz3nPmbO9v/Nf3/OemOTckH6cXufS2M44zTJ922RixNgUMmpYGtuTLQkujW0j0tfPiPSbPBPS99fremkkI50sSuYUbYrxGMpk0J03EqMlMUWbYjxGtwm2jUuN9PUpMdWNTob0ffW67rCRBC0kSROl20bR243H6PNRjNCdpxjJ0WRxmS7G7cZj9Dn0+Qi91EhfnxTpNzkVjPvptu4kxUgARROUZVie0na73ZkrV640f/Ob36yZAWRnZ5dZrdb8rKysnIyMDAeE+8no6GgcEorH44ORSMQbCAQ6jwG//OUvj7/55puxYDCoSYqnZLK23sdIpJHEyYg8I4lGYqaCcR/dnow4TZqRJHN6+5ZbbnHcdttt86uqqhbn5OQsAWHzQJQTv53NvRgxBlKHQejBwcHB906cOLHnd7/73YHHH388hN9IWCy1TG9rItPJPCcSz3TTxt81aVqM5JEgEqcJ43JcrrvuOvu3vvWtufPmzbsKpK3OzMzMw3Yedz4xmkgkfCBzy8GDB1/++c9/fmjDhg1hbCd5RtGEkkC2JyNRi8aUJBoJSofxt3TiuJxM27RYKDDN7Ntvv/2KioqKT1ssljps4/7/L5CIRqNNHR0df73//vtfhakHsC2aknQyjVpJotKJ1JiSxMmQTpgmisTYIDS5bAg1qRhSAZkJmWsymRq/+MUvrmpra/tZLBZrH/v/DN4D74X3xHvjPabulffMe2cf2Bf2iX1jH7VFaWXRcgom22jcZjyYJ6Pokxu1zcolTNT+1FNPraqvr78NGjcb284JkZGIdLS3yXAgKCZc0WZ3SPWMmWKx8jLnBmjk0cOHD//u5ptv3gETp2lTGyOppdbIdLM+oyamEzgZefopkDStieNmCmGvbA899FDpjTfe+HX4uKuwzv2mDW9fn7y6caO8+dxTYvL3SZ7TITmQLItZ4iUzpHLJMrFkZEhWhkkyMjLFmpMr1bNnS0VVtcCvps5yWiTgI19+5plnfvvlL3+5C+sjEE2iJvJ0Jq0x3k4nTEOTRyGBmrx0rbPNnDnT9uyzz65qaGj4DtKPUmybFmBlgjRENm14Qf7rod+KIzIkWVmZkgmiEJ1lTmWZZJkzBeYnx7p6ZSQckdqKUsnJcctIIibH2nsle9FKufGrX5fyysrUWU8PpENd+/fv//cbbrhhR2trK0k0EmnURsppNVGTNh3ySJwib+3atc7HHnvsluLi4lvRQZJ6VojFonKsuUUO790jHUePyPED+8TXfEjiiQQIGpHE6KhYzGbJcTmlvLBAcqGFwzBrT45T3jncLBX5+VKYnS1DkbAEQGhweFjMJZUy7+LLpG7REll5yaVn1Eg8uGhPT89jt9566+MvvfTSMDZpEilnTSKvcjryKMYIq4iD2L/97W/n33ffff+an59/M8g7/d2mEIlG5e1tW+U/f/YT2f7IfdL27lviaz0iY0ODUpDtloqCPPFgmQnykJLIAHzg8MiIRONxCYbDICosbrtdWk52SV6OS/oGgxIaCYvH5ZJCs0la97wjBza/LP5Rk9QvXHRaEnnPLpfrwmuvvbYMZO7ZsWMHTVdDk5ROWDpUxzWBeqmJ0+RRxk2Wcu+995bcddddP0AlsRrrZwTNdO+ePfLoD74ve/76Rxnp70Zw4Ok/BElKJEaVZlUVF0herlvMWWYJQSN9wSGxwQ+yJyhJQOYIiIvAzE1SU1osJYX5kognQFiGZDsc0r1/j/hx2/ULG5Xpnw5I5OtQDc0uKCh4d9OmTdRCDSN5RhLZHj9pOoGU05Fn/8UvflGMSuLHDodjBdalu6tbAsGAgEyungJUCvLkIw/Ln/7tW5IZ6E9tTZJKU42DtFG0s6AtJCcUjYkdxFHTSgpzxWnjZUV8gSEQmgW/aML+IoGhIaktL5PiIo9EhiNid2I//GDFPjzPkbd3iLO6VqpnMmM5PZAxVC5atKje4/G8/corr9CENXlaCL2cAE2gUbiNcgp5d999dx4qih9q8oje3h7p6+uXoqIi5fTT8eb27fLHb98h2U678msxaEpwOCR+EALeQFyGMjWb1SIlnlzxOJ3iABmObJsM+8Nit1nEjfTFhP3Ckai6BpXKgdSmFPv3+AYlEouJF+ejFvf6B6UPYsb+Tbt3ScNlV4gbWn0mmM3mcpBYi3Rnx86dO+n/jAQayTO2FVG611rzNHnGaGu/5ppr3PR58BsTzDYTT7yvz8vCVHJyc1Jbk6CmPPOHR6Tr4F6lPQFFXBBExCQxNqoCA83RHxxWMohgAJMSB8gc8ML/gbDR0QTSlgxss0oI2hwDSexBPnxlP85FUx6JxhW5ARzf7fUpzY7Bh2aA2KEsmyxatvyMpkyAxMoVK1YUI0K/dfTo0clyQYoG2+qsJE0vtfaROIrSvMLCQufevXv/V2lp6VewPuFOUNDL1q3bpLS0RObMmTNBCwOBgHxj3bUyfKIFnUrAtLARR2c77GIHIQwY+TD9WCIuUXR2JJYAqWHl77KhYQMwUw2bxcL0Q5nnYGhEchxJ09YYQYAagfnnuV2SgezbC78ZjoxISWm5fOfJ55WFnCXGurq6ft/Y2PhIX18fozOTbvpGnStOiMwkg4TpJcWoeQ7Ke++99zGo9y+mSlV27tgpxSUl8IOuCTd6vLVV7v74SpCaJTGqI1Ba4FF+rRjmV1SQqzR3DH6NPnFwcFj6YX7Upkzkgi5PPqoQM57smFgyzTKESOy025SW2UEoU544NDAE8kwgrQi5IX1gdrYTfs0snX0+OXayRxFYV88K7uzAFOf999+/e8mSJa9jlaM7FGOeqElUaYw2XYoOHCRP+b4HHnigDPneL+CncrE+KXp7e1WZNQQTKkTepvHeu+/KuxtfkAgCRQIEFeVmKwIIRtwsMy6FiuLo8Xbp6ffLEFKWMRCRV5QnjSuWQ5ZJeUWlLFy6TOYsXixzGuZJyYw6WbLsAln2sUvwYGAenjyxZpokDvMeBqE8B/1sFnSiOD9HTNCTvLmNUlNbq657NmCKA6tbBIvbvHHjRmqhNuX0pdJAEkYitd/TQcNRU1PjxJP4Psqzq7E+JY4fPy5ISqWgoFCKQKB22n94+GFZ/+/fk1AsLh6bWcqKCmFeEzyAqjgYhR0oy1auvlTyCgvFARNHB8SVg/Mw0qhDksfRZfAcPCaIwGGzWZOmDXln50754K23xe8dQDWTJcU4npp6Elr92Z/9VuYvWqzOcbZA2bcRlvd99I8kUgt1sk0tVCWfNlstEwLH1q1bL62urv462hN7PQmaUFlUVlSI1+eX/HwOcIj8+Q+PysG9+yTPmomqwpX0Y9A8kqaRgGmvuuZa+eSnr4eGzZWi4kLx5OWJBcSohzyBcFNyFf9xSfJIFM3VBrcws7ZO6hsXImGPSdeJExIMwX1hv2xo/bDVLQ0XXkjtSp7qLIBz1l5++eWHH3zwwXasar+nRWmg0XyNWmj5yle+4p47d+5XU7+dFtBQaEMAphNTZRpzP2oKO8HC34w0hUkuoyPTlgi0BZ4vSd5118nHr7xMcvM8SW1Tz0rdm6HNpbE9xTbTmHjw8Nau+2dZc/069QuT8MGhkPS0NKl7miYyyAG5QJuKRW60xSrepiTwnnvuuQYJ5hy0zwg+VfgLGRjwiwfBgck1S7Eg0gwb/Fw+yHGjQmAHTPB55Vh32eyy6JKL5cqPXwY3yMuegRwF4zZi8mOs0Mya2bPg4TNVcKJf7D12VLWnC3JALtiETEogr2okz4w6N6e8vPxzaJ81UAqJ19uv0pgg0o+O9naJ9nZKkcMsYdaxSD1sViTIVrNKMSIgs7YeaQ80cpyAdA2kuY1vI1Lb1O9E6vfxbal9sa2iokyqkVZFEFAYVOgzPzxueiAX5ARNxQ9Ek8jhylM18Etf+tLl8C0csT1r5EGrmMjG4H9yYdJ/X79eXNEhpXX0U27kbUyKmfhy1GUM7bq6WamjU9A8aaT4mIB0DjR3RmAbrWLBhUuUBZjgRpgn9vb0pXaYHsgFOUFzUg00kpd10UUXWSsrK29Ce1ogaezLYGBQpSdVlRXoRIZYkBBzUFTDgt/sqDQWX7xKnC79Mk6zYFymb0v/fbJtxjZCJoMIwErGBk0PhYalublZbZsuyAm5QVPxBFEknqJ999577yLY/dknTSlYEQVtFqsM+AbUen3DQrEUVYgnVTFQE3NBmBX1cBRpTf3ChWr7+Qbis9I+ohxmHMO16Pvi4NVuT9bjvb3T10RyQm7QnKCFmjwtWXV1dWtS7WmjCHnewOCgSqzjqHU/c9f/FjNIVWYLAgPQCKYWDuSJ1VUVKo9rbWmVlqZmaTvWLiFVumktgkzwgan2ZNuw9Hm9suutXfLEI3+Up594Sl7fvgP5aI4Mwv8StpJKVUezdg8Nf1giTgOZKW40eUr4nwvCCGO78cYb3Z/73Of+FYHgQ5ubBvjkjxw5InanU8rLyqSsslIyPYVy6K03xAmz1VGwfuFcVaYFBwaxbVQG/EHZ/tp2eeO1bTKElMPldqocT/HI/7jEfqkNWHDbmHr5dKLthLz26lZ5ef1/wddlyfKPrZTGJQulGA8zAe1jNRTwB2T+mrVSO28eUqyoJEBkPoLedAEtLD58+PDfDhw4wJJuPJFm2aAIfPzxx5dVVFR8Cm0+3mmDw1JHjh6VdkTZkXBUSgrypGLmTMmfWSctu3YqEjiQunzpfDVinJuXg47kIwUqknn1s6WkvFyamprk1Rdfln179kkmEu+yspIkeSnSjOLHA/jzo3+UUVz3E2uvkKXLl6CCyRcrjgsjaDhR0Wzd8ppKr264/S4pQJ3OB8aqhVnDdAHFss+YMWP3ww8/3IFVRSCJKoNQ41wwvTtRQn0B7XMCNWz9Cxtk4/EM2eA1ySOX5siS+hkqCh/Zt1f+9pPvScPcGlm2aLZUNCxT9fDx9pOShbuwWVhR2MSOTvv6vHAFQzK3oV6s0NypQL866PMhcAUkPhKSvv4B8aFs6+z1SmlVlWS73fLy889LxfLV8oU7/kWpxbHjbSg3C6W2Ni0DOEv09fX9oaio6Ndo0g+EqIHMb6yo+ey33XbbrWazmYSeE2jCHMJ6sTkgVxWNyL4+sxSbBkAUalVTpux+512pKXRLaUGODMMIHv3TX6UVGrdj13sSAwG9nSckNDggFiTdNdUV8J8WpbETAe3j/1iMIKoea2mRYH+X/H3bbnn4H8clUlgi7X0DsvWVVyWBBDoE8735G9+S7Nxc6eruwXEmZd4ulQFMH9DCxMaNG1/q7u5W9bCOwixZLFar9awqj9OhDPVwcVZUCh1x2RNABMy0SDeinsPhVCPGZjOqA6jC85u2SWtHtxwKmuRg9kq5581M+ZdXQvLom1450XxYTiIRjyAAMHecKKNqGYuEpau9Q0aHffL7TU3yH4fs8qm77pDyJavlB7/8leRAA4uqKqVs2cWwNZO0tbVJMLYLfiZyjg4qCXJErtBUvI0T+PnPf74K7E7+YmMaKIZvUakD2gWmmPgjcT413PSYZKMKqSnNF7PNKQ31M2UoGpf/8bWvit9dJkMm5I4ei1z35S/JfU35SHp7ZIj1NQKFwe0pGUUiHg4GUFeL7GoJyCvuBskYGZbNL2+RnU19yENt8oVbb5GPLZgtFqdbPbjAkFci1vUqgTfxJOcIckSu2FSr+I/PI6O2tpaTfz4y6O+WVheKL5wlgVEOlKKX6oYzxO2yix35InPGpY3z5eprr5bK0kKZNatY5iCwHBwYlR9tOSQXX3aRFF54mRqZTsRpKRPBsT8OTmSaLTJcvVA+tmalVF16sezJmym4iBTnZUuly4aHiEDT262uz07axq7EXdjhatjtc0eKK8WdYpGSnZ1NVj8yqG3XrKiV54+ZxBvPlFzk0aoOhXT4h1VtystmZpmlKCsug52d8rnlNUg9FkjpTeuktqJEvnLdSlmw4hKYWxY0BiYLjTNiNM4RaDwYq1Nu+qeVck21S+ouWCzrls2XX920Qg6+9bpEfd1ic6M6GsOxuLwJxLnGVsMfj4nlNIHpbJDiSvGmWKTAtguxPC+YWV0lFx3/u1wR3Su9PmT9IG/Q75fwIIe84JEQbLKQYC9dtEDkZJM4296Xb8zMkD+vniWPfWqhlNgSEu3rUEm4GaWgcgFpsCDXzM92iavnmFzl9MmPywfkjvxuGdu/RTzhHqmdVaOICoVG8LxgCepfApE+Uw2/fRSkuFK8jRMI0/NgeV7AiT/LLlworX/6lWz4NeTpp+TBf/u2WAJ9EhwKK7PkOw8rom193SxpnFEkheFOKe/fL8E9W6T37X/IcPP7ak4MKwcwnjpzEiSfw2JZiNKZyOtsplEp9zikvCBbSooLxQ2CMqDhVPzwoB8J94gKPgxKCxoaUmc5d6S4mkggnvK5xfUpUDVjhhp6P3n0kHywaaM4QgOSifXhMMq6GCIhOscpHJlWqyLE4XKrIfzsvHyxuVzYblckTAZTpllpMVMcKzTRbLVJBouqNN82FBiUgQPvyiPf+Yasf/B+KUb+h2oi9eu5I8XVOIEK2PjRz2wAE9nhOCoPtFng26FNhI9JbyymouGpSGqa0i6QOxUyqJUaadpphH8wqHzt6KBPgof2SDRinLlx7jByZXxkU9/JOYAaFUUU5pC+04ygAVL49qyto1dMo0is2Rna2H8TyGtnZ4/SVL6TtttteHAsYc8LxrkaJxBlmHF20kdGHH7OBP/kNGeBRJgriCRaTvapdyYjAa+MxaanEfStZqQ2rLnHEJlHo3xBNjnikag0HzqUWhMxM6Kfp+dl5IoEqtPCySbHfc4TGHXpAy0Zo2JBhxlJKT2dfdIfCEk8PCzRoYAkUI4ht0gdNQXQc6YzHKilSTKwjEGLmd7oEZ5x4KElRsIS9PukA5UKZ3jZ4GfNOJal3/mAgSv1Vk41EolEMNU+LwiHQ2KG1pFE7abY5pyYlhOdMoLIiKsip4tIIjoCbYR5gaR0RNDp/p5uOf7BexLw9kCzQI63Vw7u2SPDw0PKRMcBU03gPCS2p39Ahn0+NQLO0Rk+vPOlgSmu1NlIoBpoi0ajXm44XwiHR8QGn8d5KvR/RJJMk7z61gdqeD3BYJKISTwaRec4ZHUqgYywo4jaY9Cknrbj0rLnbelta1Gpiis3+f5ZgQk33MbI4IA6z4GjLeqcZgQjvo8+n0hxRQJHtQmPhsNhTro+bxhmraoS4DGVvhBMO0hiT69PDSRwBGaUIzWRkAz1dyvtSddCpidFlTVSPWeeFFVUS0H5DCmqmS1Vs+uTpgy1UpUKjhvygzw8MHRQNm97Uz0svsQ3s2gGGP3PB1JcKcUbJ7C3t7cVy/MGdsyiNZBRBOC4H6MyX6hv2YWkGSRTC7OwH/cP+/uVRsYQZNqOHZO+XibewxIIBKW/8yTKwFGJZ1rE29MjXfj9ZGurHNm7Tw7t5/zqOMwJ/tZml30HDkrHiQ51HQYvEklN5Ej0+UCKq3EC2RjdvHnz0VT7vIDz/AgSo70UZ5cS1Mi9B4/Jzt37JRwcVCRygIGglnCkxQEiel5/S5oe+qM0Q048uV6a7/utNN17n/Stf1m8G16WgU3bpBr55vz5c0AeHpjNIYPwj8+sf0mNuIxiKwcOGLU5OyK9pj5HGLlSJqwaW7ZsCcRisRNonxdwrgqVm85bg9pIDUy2Rf784uuya89emB40D4GEIzkSTc5K5RzpOZcul+LKMlm4bJms/PgVUr1kmdQ0LJTq6hlq+L90/mxULQ4EoWQgigwNyt82viotrSeVWanr4EIuh00RyOlwHxXkiFyhOYHABD8bhW0fQPu8gHOeieSMgCT4WpN+kS6R0wU5V+axZ7fKa2/vFW8vfCAirKpSkB8ycCB8intpowx4vTI8OCguBAOn3SkZzAUL8sW1sF4N5Y9i/3DAJxteeU3+/o+dyD1Z+5A8Rt4xrFvUu2iOcH9UkCNyhSbVWRHIBr/giXu93vfRPivwxjiywpmlkyG/sEj5Hmqh8kHQLk4140wBrZP8lS94nnxhm2zcslO6O9okHkKphyolgcBCYqw5TrEtnSv+XIcEij0SKC+QyKwSsTfOhpnGsR98pK9fnn7xH/Ls37ep+3LhGpZMeERGZqyrQIJMgOMxbR3tcqi1Wd547x2kQdPPC8kRuUJT8UY14QslLs2LFy8ebmxs/DQ6nFSf06DP55V3juyXNjj3Afis7t4eNS+ZE4r45GMwq81/+XMyAYY25udkixvlVO9gQHzDEfHYMiWSILl8GCIuBpoYkuBYWGywZFYdHISC55dMEGIDkXaIFaZt5ct65HyjiNqdJzvkby9vkVde263Io77nWZMz9Rnx87Jd6tMJEhksLJHM/FwZwgNClalmUZQW6Ad9ZuD8sQ0bNvzH+vXrfVhV8wS1CVPit9xySxcS3L1onxa80XebD6oUIxPmFIAZDcIHtXSflKbek/JO00HZ9ObrYoLpaA3kWzf6IbfDjiAiqsSjCnLGACOl1e1G0pspXZ0+OXSoWU6eOCaxUDDp31BZUKiZo7hWHEl4YmRYjrW2yO+feUm2vLFXaRc7QdLYJiWcSseHRw1UOaEjGdg0gnATzcgtzxbkhhyhSQ2c4AO5QUlPT88rWJ4WxzvbpQ9lGImcCp78AsnKS447ci9OqSByQCA7SfNKJtrYiB1MSIJtCB4OexYS4oScbOuS9hNtMhIcUGY6FqNJg0gEmdGRoHSfbJfX390vh4+0fZhnQrR7oBXQjPlCHzcqI6zNOTJDs04J77+XifdZIsXNOFeQD31gSuIvvvjiNpycUWZK7EclEEMtytn1xhsyig1E5dTXY28mukwokl0jgYzE1DwnzJbPgJMtrTBvaqDNZkZKA6eP6OoPhKWV86e7OhFkesXf1yu9aDe1HJcen1+c0Cg+nDgiEsMGCaQ2sEUtR/EMv2uFyUYkPBIRp8sFU8b9GeRsk2v0KUBu0CRx45xNMGFI7M477+yDk3wV7SnhstrVjYdhtuk3pIWTHIurq9VTTk5n4yVgBtAuF8w5ilXWygQnWOYVlyIlsYuntFTySorwACwg1YyImyUDoRHpGQxKjz8g/nBEMkGw+iogv1RpcBzX4JngUsVs0EbORbTDxfiHQxIdM4ndc+o8eafdnmqdHuSE3KBJxpX2UTSBSvu0IEw/g45POXhWV16ltIpfS04FM0wnu7gYZlykNNIf4hxtXAya6wIBoVhC+T4nyhNLTq4U1M2VLJBldziltGKGlM2YLbkcnUY+yWlwFLvTIQ5okaeoXAqKyiSvulbs7mxFIv0etc6MHvHhkkEnR2HgA/2c0FQ1YzxZN6IQ1zgTyAU5QXOcIwg5m0AghezG7rjjjhaE+NfRnhRlRSVixZPm9xlT+cExmJULnfPMW6AiLT/FYmTMQoDnZ13sbBRXdMCM7dm5Ur5gpdgXfkKiGTRLBBVUFYXFFVJcMUvyCkolv6gC61VSXFop2S63DGU4pWLRKpm1/GJx5OZB65PXpX8lhcw3ORITQqTmQGrugkb1uZgRPORsTJhckBM0FT8QzZcikOcxamG0tbU1gmz79yBnUhWjg55dUqWGpiJwzkaQuCBSldajzSrPKmloUH6O034D0EIrTIqwojPD0EI6ek9+PvJBpCUOj2QvXSv+nGoZEquE4Sg5vG93uKCJyXckgTGbeF2VkjFrMUzfLOV1dWKBGfI7FHYkacGc2J7MNzmdbjQjS0rm1KuHTffCPXnvXNrMEyNzOsgBuSAnWKVVjmsff9YaaCSQjES/9rWvtfp8vufRnhRVJeXqhkY4/oYb4Y2FQFhrc4u0tZ1Q3waPUgtzPeJuXKoS7i44fhuiMcohLDMlDDfATieDCXwljhkJx8SSXy7W+hWSOe9iGS6uhxYhaYcPC5YtEOf8VWItrJToCCoW/KuZUSMumGE2riNmm9hTIy98o8c0i/7P1Xih5BQUJO8TosnjPRegojkdyAG5QJPkkRsjgaO8Gknkc6OwrdaDwWBGfn5+8/Lly6+AxrmxbQKYXx1sa1U3Y4VZdrV3SldXt5rWgXtTWkeoHDDPI/0fvK/m8+VkO3GMyBA0MojEmaY2ilSlevEycThdYrcnZ/PHcZ5YfFQszmw8pBg6axLPzHkSDHLedfLkjLYkvXbufImj0kmwC4N9Kq3hDAgHxDsUlspLL5fSmmrejDpOIx6NKX/OwYbJgCqp84EHHvjec889N4hVFtKnkKgJJPTZNZGmzZs3xz/zmc/0FxYW8gtNvZ8Ch4da248jgQ5L3/FOGUGqoMGklSMfHpieFafzON1iyy2QroP70IcM1bHgSHIQlcHEzmF/BIWKqhqY68S5nfxcAkUs7hQ5XIZFDVFpRKH9AdTInMZWOWMmfFym9O7fo3rgdjrV9I/ylZfJvKUrknUx3EQiyqlG3MUEf5whMxWBE7qmkTh8+PCP161b9wHadGXahI0+cPyTfy2EIi8lGY8++ujJ22+/vRDR8JSv9fhRYMdAn8SCISnJ8ciMsgqpKS2T2ZU1csG8BqmfVSvVFZV4XmPiKSyWjs5OGTh5AtphRQTG47M7xVJSJtEBn/iR381askxyYYoTSyuaHZJxhlrTh68zOUOLv5EIaqz6uh2lWdvuN3E5E0pHN3qYITd88x6ZP3eelOYVKLFlwI/2edEzE9Ipm+Tl5KRGjibC7/evr6ur+09oIcnT2kfNo2i3N4FAwrhUAg0wQdv2r1q1anlWVtaE6R+cOXUYpVC2ySxzkCbUzpwpefR5SDU4NEUiuOR3xBziL6yoluYD+2QM5ZgLjn940C8VjculGx3KCvokC7UqUxeOmnxoVqAI52EibEFSTNCH8i1BZTXSKShkCH6usLhA9u16S3pQn7uRBjnRz4qL18ila/9JHZO8FwQkPDzvwIAU5eRLeVGx0mB+GJSDVIqzJYhIJHLopz/96fdee+01FhRG09Xap8ijaAI1TiGQsn379vjSpUs/qK2tXQ1TGLcxziSdxU7DVPuhRTwjySN4wxyLU586gJBsFPQxBA1PRZU07X0PmgA/Cq3hnzxZdt06Obh7t8TDIZm9eKmaBD40FFSvRml6dAdDIZRz0LRBkJ6LhLisvExdg9/UcbJ6cUmxbH3hWYng2NnLL5KhjmNy9W134YHkqXPQTHl/nA3BjCCCujofD4sDvzyWOSLPB4XxvvTSS3cjcHAaL8kzmu4E7YNMOhvfSCihSPzLX/4SuPrqq4+WlpZehgtZGDWV6jPSIi8LwwcOgEQPTILTdJMTenAVpg7oODuRk5srWVab1C9fJQd2blc5YMjvk9yKmbLo8jXy3ksbpGL+QvVtr5qZgA5FoskPc7Kz3epjnioEAz4MdpZQo81IjfjKc+sLz8uiK69B7TwiBTWz5KIr16r99D0wxWJ0o7/2+wdhLTniQRR2wF9yP+wztHv37nvWrFmzD6cmeZrAychTojVQk5a+JMa3PfPMMz3XX399Z0FBAf8OFSzbrIJJFDfkgEn2+7zqGxB+dEPnzxs3QpGI3/Ly4Y/mN0rze+8iX8uQPm+frLnhM+KpniV7tm+RT1y/TkpKS9S3x8XFRerzCWodAwzPkQ7O6A8g99yza6dccNkVcuydN2T1Z/+nuk46VLoEFzBMbZ89W5wgL7U9fOTIkR9eeuml22DCmjxqnvZ96eQpGE3YSJoR49txYtODDz544qabburKy8tbQRLp42x2mzIzvuv1w8Q80LSpUgM+afqaQpR55Q2NcnzfXlVJ9Hh9cv1Nn5XA0LAaPKidM73ZxvzjF5Wz6pAWZalBjpWrrxjX0nRQuxEg1OACAc0LNTU1/bihoWET+mAkz+j3jL6PUMt0H6gxFakmPsGnn3667aqrrmpFekMSbdQK9RUQfF1XTzeqDas40tKRyUD/VNV4gRx9e4fMuXAFKpegXHLFlXJo7/viRjCiqZ4taKIlZYjoUJ48BIfCkpLULx+ChLKm5sfcepIljhvcv3//9y+//PLNyE21yRrNVpOnNU+LwmRE6TSGSwpzBxLNGoxhUIsdeeKCSy655IfQwvEPEwcQ4drb26VwEvOZCn6fTzY+9YSs+edPq45z9HjXjjdkybIValLQdNB9siM5CJE2ykIfmQ33od8WEkhROhAg/w98njHXMxJI4ozma9RAQvlADU1cutZppLM/9sQTT3hrampehy+pgvbxL3+ZqImFBYXKhJlupPvBycDOzlmwUJoOHZLi0nLlV5misPzTA7FnCxs03/hn8mgd/BMEKoDB3aQwhjp9x5NPPnnPDTfc0IR1I3nadI1mq4kzcqM6pglMJ06v623pv4+zsmHDhuFjx45tX7FiRdjlcjXQLzIC05wdTjp9pAaoAM5EJP1SaUWyvib5NLfpkkfoIMNzuNwuBB+P0jrtD+nvOjs7H7rjjjt+9aMf/Yh/Sild69I1jtA3r5fjXKQTk7x6ErqtNZNks83HSGHv6Ej4uC2IzNbHH3989urVq78JLbwA28bPS1L4TpbzYfg98dlo5bmAJDGl4TcpDGyatBTGwuHw7i1btvzylltuOdrf36+1zah1JE8TqP2eJlEvifG2JlBfiUtNnPE3vZ1CIinpRCoyP/nJTzp+8pOfXIak+0swxVP+oB/TGw4qjIyE4fCnHk9MB8ngTXBvvSQ4/sc/0MjhLo6CTxb94Uram5ubH77nnnu2vvDCC8a/AZNO3GRmO5UQKBqTpGiStOhthJFQTSJFayQJJJEkUJNphonk3HnnnWuqqqpu1v4RMgEkjzkZ3y/zy0rOb+FItxqzQ1TlAewFSVIEghyOMKu3gfBn9GmUNE3T4Iyz9hMnTjz161//evNvfvMbjqiQLE0alySNbV7GSJwmj5isPS68siZCE6SXuq2FSP+dYtRGtsdJpKxdu9YOX7N81qxZn3C73UvR2Q89/H8D8FAiKA/faWlp2fTd7373bZRlDBAkyUgeyTJqnZG4dMIIrnM/LvXvakky2FEjGenkGMkjNKFa9H5aNJlalIZWVFSYb7/99vx169atKi4uXoY8cTa0Z8q/hjQdIB3xh0Khoz09Pbuee+65Hffff7+3o6ODRGkN02QZSdOiCTEKYdzONkXvr5d8P6+CgLHzemkkcjLyCN3WJLKtz5V+vvEl6umsa6+91oHaunLevHlzUdXUgdBKEJpDDUUktWDJ/fV1oFhjCUTQKDUMhA2CsHafz9d08ODBQxs3bmx/8cUXQ11dXZqcqZZaSAqXRpII3TaK3k8fO+FcvEGWDOwYRZmdYV0Tw6XuDJe6Teh1vQ+XWvSxxqVu8/zcX6/LzTffbJ87d64jPz/fAkJZJvI3algChMW8Xm/00KFDoaeeeopmSeiOsaPsmLGjum1cauH+eknR0Ot6mz4XheenGDRb4v8X4VzHVmGr8asAAAAASUVORK5CYII=">
+        <div class="header-text">
+          <h2>Виртуальный ИИ помощник</h2>
+          <p>Начните чат! Я готов вам помочь 24/7</p>
+        </div>
+        <button
+          class="close-btn"
+          onclick="
+            document.getElementById('chat-container').style.display = 'none'
+          "
+        >
+          &times;
+        </button>
+      </div>
+
+      <div id="chat-body">
+        <!-- Статичное описание -->
+        <div class="intro-section">
+          <h4>Описание:</h4>
+          <p>Демо-версия ИИ чат-бота.</p>
+        </div>
+
+        <!-- Динамические сообщения -->
+        <div id="chat-messages">
+          <!-- Пример приветственного сообщения от бота -->
+          <div class="message bot">
+            <p>
+              <strong>Добро пожаловать в документацию NMC Client!</strong
+              ><br /><br />
+              В этом руководстве вы найдёте полную информацию о возможностях
+              системы, структуре меню, правах доступа пользователей и
+              функциональных модулях.<br /><br />
+              
+              📞
+              <em
+                >Нужна помощь? Обращайтесь — я помогу найти ответ на ваш
+                вопрос.</em
+              >
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Поле ввода -->
+      <div id="input-area">
+        <input
+          type="text"
+          id="message-input"
+          placeholder="Введите свой вопрос.."
+        />
+        <button id="send-btn">
+          <!-- Иконка отправки (SVG или символ) -->
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <script>
+      // API URL - здесь можно использовать ваш бэкенд (C#)
+      const API_URL = "http://10.160.20.177:8009/api/chat";
+
+      const chatMessages = document.getElementById("chat-messages");
+      const messageInput = document.getElementById("message-input");
+      const sendBtn = document.getElementById("send-btn");
+
+      // Функция для безопасного рендеринга HTML
+      function sanitizeHTML(html) {
+        const div = document.createElement("div");
+        div.textContent = html;
+        // Простая санитизация: разрешаем только безопасные теги
+        const allowedTags = [
+          "p",
+          "br",
+          "ul",
+          "ol",
+          "li",
+          "strong",
+          "em",
+          "b",
+          "i",
+          "code",
+          "pre",
+          "a",
+        ];
+        return div.innerHTML;
+      }
+
+      function appendMessage(text, type) {
+        const msgDiv = document.createElement("div");
+        msgDiv.className = `message ${type}`;
+
+        if (type === "user") {
+          msgDiv.textContent = text;
+        } else if (type === "bot") {
+          // Для бота разрешаем HTML (ссылки, параграфы)
+          msgDiv.innerHTML = text;
+        } else if (type === "error") {
+          msgDiv.textContent = text;
+        }
+
+        chatMessages.appendChild(msgDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+
+      let currentSessionId = localStorage.getItem("chat_session_id") || null;
+
+      async function sendMessage() {
+        const message = messageInput.value.trim();
+        if (!message) return;
+
+        // 1. Добавляем сообщение пользователя
+        appendMessage(message, "user");
+        messageInput.value = "";
+
+        // 2. Показываем индикатор загрузки
+        const loadingDiv = document.createElement("div");
+        loadingDiv.className = "message bot loading";
+        loadingDiv.textContent = "Печатает...";
+        chatMessages.appendChild(loadingDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+
+        try {
+          const response = await fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              message: message,
+              session_id: currentSessionId,
+            }),
+          });
+
+          chatMessages.removeChild(loadingDiv);
+
+          if (!response.ok) {
+            throw new Error(`Ошибка сервера: ${response.status}`);
+          }
+
+          const data = await response.json();
+          currentSessionId = data.session_id;
+          localStorage.setItem("chat_session_id", currentSessionId);
+
+          // 3. Добавляем ответ бота
+          appendMessage(data.response, "bot");
+        } catch (error) {
+          chatMessages.removeChild(loadingDiv);
+          appendMessage(`Ошибка соединения: ${error.message}`, "error");
+        }
+      }
+
+      sendBtn.addEventListener("click", sendMessage);
+      messageInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") sendMessage();
+      });
+    </script>
+  </body>
 </html>
